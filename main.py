@@ -1,32 +1,37 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, jsonify
 import yt_dlp
-import os
-import uuid
 
 app = Flask(__name__)
 
-@app.route('/download', methods=['GET'])
-def download():
-    video_url = request.args.get('url')
-    if not video_url:
-        return {"error": "URL fehlt"}, 400
+@app.route('/')
+def index():
+    return 'API läuft!'
 
-    output_path = f"/tmp/{uuid.uuid4()}.mp4"
+@app.route('/download', methods=['POST'])
+def download():
+    data = request.get_json()
+    url = data.get('url')
+
+    if not url:
+        return jsonify({'error': 'Keine URL angegeben'}), 400
+
     ydl_opts = {
-        'format': 'bestvideo+bestaudio/best',
-        'outtmpl': output_path,
-        'merge_output_format': 'mp4'
+        'format': 'bestaudio/best',
+        'outtmpl': '/tmp/%(title)s.%(ext)s',
+        'noplaylist': True,
+        'quiet': True
     }
 
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([video_url])
-        return send_file(output_path, as_attachment=True)
+            info = ydl.extract_info(url, download=True)
+            return jsonify({
+                'title': info.get('title'),
+                'filename': info.get('title') + '.' + info.get('ext'),
+                'status': 'done'
+            })
     except Exception as e:
-        return {"error": str(e)}, 500
-    finally:
-        if os.path.exists(output_path):
-            os.remove(output_path)
+        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)
