@@ -3,10 +3,13 @@ import yt_dlp
 
 app = Flask(__name__)
 
+# 🟢 Главная страница для проверки
 @app.route("/")
 def home():
-    return "YouTube API server работает!"
+    return "✅ Сервер работает. Используй POST на /download с JSON: 
+{\"url\": \"https://youtube.com/...\"}"
 
+# 📥 Web API — принимает ссылку и отдаёт прямой файл
 @app.route("/download", methods=["POST"])
 def download():
     data = request.get_json()
