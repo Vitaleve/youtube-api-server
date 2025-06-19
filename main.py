@@ -1,38 +1,36 @@
 from flask import Flask, request, jsonify
-from yt_dlp import YoutubeDL
+import yt_dlp
+import os
 
 app = Flask(__name__)
 
-@app.route('/')
+@app.route("/", methods=["GET"])
 def home():
-    return 'API работает. Отправь POST на /download с JSON.'
+    return "✅ Сервер работает. Используй POST-запрос на /download с JSON 
+{'url': 'https://youtube.com/...'}"
 
-@app.route('/download', methods=['POST'])
-def download_video():
+@app.route("/download", methods=["POST"])
+def download():
     data = request.get_json()
-    video_url = data.get('url')
+    url = data.get("url")
 
-    if not video_url:
-        return jsonify({'error': 'Не передан параметр "url"'}), 400
-
-    ydl_opts = {
-        'format': 'best',
-        'quiet': True,
-        'noplaylist': True,
-        'skip_download': True,
-        'forcejson': True,
-    }
+    if not url:
+        return jsonify({"error": "URL не указан"}), 400
 
     try:
-        with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(video_url, download=False)
-            return jsonify({
-                'title': info.get('title'),
-                'url': info.get('url'),
-                'ext': info.get('ext'),
-            })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        ydl_opts = {
+            "format": "bestvideo+bestaudio/best",
+            "quiet": True,
+        }
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            direct_url = info.get("url")
+            return jsonify({"direct_url": direct_url})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
