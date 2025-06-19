@@ -1,13 +1,12 @@
 from flask import Flask, request, jsonify
-import yt_dlp
 import os
+import yt_dlp
 
 app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 def home():
-    return "✅ Сервер работает. Используй POST-запрос на /download с JSON 
-{'url': 'https://youtube.com/...'}"
+    return "✅ Сервер работает. Отправляй POST на /download с JSON {'url':'https://youtube.com/...'}"
 
 @app.route("/download", methods=["POST"])
 def download():
@@ -17,17 +16,16 @@ def download():
     if not url:
         return jsonify({"error": "URL не указан"}), 400
 
-    try:
-        ydl_opts = {
-            "format": "bestvideo+bestaudio/best",
-            "quiet": True,
-        }
+    ydl_opts = {
+        "format": "bestvideo+bestaudio/best",
+        "quiet": True
+    }
 
+    try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             direct_url = info.get("url")
             return jsonify({"direct_url": direct_url})
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
