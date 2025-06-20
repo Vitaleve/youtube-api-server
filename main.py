@@ -2,22 +2,27 @@ from fastapi import FastAPI, Query
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from yt_dlp import YoutubeDL
-import uvicorn, os
+import uvicorn
+import os
 
 app = FastAPI()
-app.add_middleware(CORSMiddleware, allow_origins=["*"], 
-allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/download")
 async def download_video(url: str = Query(..., description="YouTube URL")):
+    cookie_path = os.path.join(os.getcwd(), "cookies.txt")
+    print("Using cookies file:", cookie_path)
     try:
         ydl_opts = {
             "quiet": True,
             "skip_download": True,
             "format": "best",
-            "cookiefile": os.path.join(os.getcwd(), "cookies.txt"),
-            "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) 
-AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0 Safari/537.36",
+            "cookiefile": cookie_path,
         }
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
