@@ -21,16 +21,19 @@ async def download_video(url: str = Query(..., description="YouTube URL")):
             "quiet": True,
             "skip_download": True,
             "format": "best",
+            "cookiefile": "cookies.txt",  # Файл с куками в корне проекта
         }
+
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             return {
                 "direct_url": info["url"],
                 "title": info.get("title", "video")
             }
+
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
 
-# Запуск сервера вручную, если Render не найдёт порт
+# Для запуска вручную на Render
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=10000)
