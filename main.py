@@ -1,34 +1,31 @@
-from flask import Flask, request, jsonify
-import os
-import yt_dlp
+from fastapi import FastAPI, Query
+from fastapi.responses import JSONResponse
+from yt_dlp import YoutubeDL
+from fastapi.middleware.cors import CORSMiddleware
 
-app = Flask(__name__)
+app = FastAPI()
 
-@app.route("/", methods=["GET"])
-def home():
-    return "✅ Сервер работает. Отправляй POST на /download с JSON {'url':'https://youtube.com/...'}"
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.route("/download", methods=["POST"])
-def download():
-    data = request.get_json()
-    url = data.get("url")
-
-    if not url:
-        return jsonify({"error": "URL не указан"}), 400
-
-    ydl_opts = {
-        "format": "bestvideo+bestaudio/best",
-        "quiet": True
-    }
-
+@app.get("/download")
+async def download_video(url: str = Query(..., description="YouTube 
+URL")):
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl_opts = {
+            'quiet': True,
+            'skip_download': True,
+            'format': 'best',
+        }
+        with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            direct_url = info.get("url")
-            return jsonify({"direct_url": direct_url})
+            return {
+                "direct_url": info["url"],
+                "title": info.get("title", "video")
+            }
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port)
+        return JSONResponse(status_code=500, content={"error": str(e)})
