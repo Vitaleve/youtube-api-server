@@ -5,7 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
-# Разрешаем доступ с любых источников (в том числе с iPhone)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -14,7 +13,8 @@ app.add_middleware(
 )
 
 @app.get("/download")
-async def download_video(url: str = Query(..., description="YouTube URL")):
+async def download_video(url: str = Query(..., description="YouTube 
+URL")):
     try:
         ydl_opts = {
             "quiet": True,
@@ -23,9 +23,9 @@ async def download_video(url: str = Query(..., description="YouTube URL")):
         }
         with YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
-            return {
-                "direct_url": info["url"],
-                "title": info.get("title", "video")
-            }
+        return {
+            "direct_url": info["url"],
+            "title": info.get("title", "video")
+        }
     except Exception as e:
         return JSONResponse(status_code=500, content={"error": str(e)})
