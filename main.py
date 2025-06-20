@@ -13,8 +13,7 @@ app.add_middleware(
 )
 
 @app.get("/download")
-async def download_video(url: str = Query(..., description="YouTube 
-URL")):
+async def download_video(url: str = Query(..., description="YouTube URL")):
     try:
         ydl_opts = {
             'quiet': True,
